@@ -31,7 +31,7 @@ def ls(
             logger.error(f"You entered {path} is not a directory")
             raise NotADirectoryError(path)
         logger.info(f"Listing {path}")
-        scan = list(os.scandir(path))
+        scan = sorted(list(os.scandir(path)), key=lambda x: x.name.lower())
         content = []
         single_str_output = ""
         enum_output_mode = LsOutputMode.LONG if output_mode else LsOutputMode.NORMAL
@@ -39,19 +39,18 @@ def ls(
             case LsOutputMode.NORMAL:
                 for el in scan:
                     if el.name[0] != ".":
-                        single_str_output += el.name + "   "
+                        single_str_output += el.name + " " * 2
                 content.append(single_str_output)
             case LsOutputMode.LONG:
                 size_max_wight = max(map(lambda x: len(str(x.stat().st_size)), scan))
-                name_max_wight = max(map(lambda x: len(x.name) * (x.name[0] != "."), scan))
                 for el in scan:
                     if el.name[0] != ".":
                         stats = el.stat()
                         mode = stats.st_mode
-                        single_str_output = stat.filemode(mode) + "   "
-                        single_str_output += str(stats.st_size).rjust(size_max_wight) + "   "
-                        single_str_output += datetime.fromtimestamp(stats.st_mtime).strftime("%b %d %H:%M") + "   "
-                        single_str_output += el.name.rjust(name_max_wight) + "\n"
+                        single_str_output = stat.filemode(mode) + " "
+                        single_str_output += str(stats.st_size).rjust(size_max_wight) + " "
+                        single_str_output += datetime.fromtimestamp(stats.st_mtime).strftime("%b %d %H:%M") + " "
+                        single_str_output += el.name + "\n"
                         content.append(single_str_output)
         sys.stdout.writelines(content)
     except FileNotFoundError as e:
