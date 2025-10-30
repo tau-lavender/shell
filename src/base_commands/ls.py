@@ -1,56 +1,62 @@
-# import os
-# import stat
-# from datetime import datetime
-
+import os
 import sys
+import stat
+from datetime import datetime
 from pathlib import Path
 
-import typer # type: ignore
-from typer import Typer, Context
+from typer import Argument, Option # type: ignore
 
-app = Typer()
+from src.log import logger
+from src.enums.ls_output_mode import LsOutputMode
 
-# def ls(self, path, arg = {}):
-#     scan = os.scandir(path)
-#     if "l" not in arg:
-#         for el in scan:
-#             if el.name[0] != ".":
-#                 print(el.name, end = "  ")
-#         print()
-#     else:
-#         scan = list(scan)
-#         size_max_wight = max(map(lambda x: len(str(x.stat().st_size)), scan))
-#         name_max_wight = max(map(lambda x: len(x.name) * (x.name[0] != "."), scan))
-#         for el in scan:
-#             if el.name[0] != ".":
-#                 stats = el.stat()
-#                 mode = stats.st_mode
-#                 print(stat.filemode(mode), end = "   ")
-#                 print(str(stats.st_size).rjust(size_max_wight), end = "   ")
-#                 print(datetime.fromtimestamp(stats.st_mtime).strftime("%b %d %H:%M"), end = "   ")
-#                 print(el.name.rjust(name_max_wight))
 
-@app.command()
 def ls(
-    ctx: Context,
-    path: Path = typer.Argument(
-        ..., exists=False, readable=False, help="File to print"
+    filename: Path = Argument(
+        default=".", exists=False, readable=False, help="Dir to print",
     ),
+    output_mode: bool = Option(False, "-l", help="Add more information"),
     ) -> None:
 
     """
     List all files in a directory.
-    :param ctx:   typer context object for imitating di container
-    :param path:  path to directory to list
+    :param filename:  path to directory to list
     :return: content of directory
     """
     try:
-        # container: Container = get_container(ctx)
-        # content = container.console_service.ls(path)
-        content = "LS used"
+        path = Path(filename)
+        if not path.exists():
+            logger.error(f"Folder not found: {path}")
+            raise FileNotFoundError(path)
+        if not path.is_dir():
+            logger.error(f"You entered {path} is not a directory")
+            raise NotADirectoryError(path)
+        logger.info(f"Listing {path}")
+        scan = list(os.scandir(path))
+        content = []
+        single_str_output = ""
+        enum_output_mode = LsOutputMode.LONG if output_mode else LsOutputMode.NORMAL
+        match enum_output_mode:
+            case LsOutputMode.NORMAL:
+                for el in scan:
+                    if el.name[0] != ".":
+                        single_str_output += el.name + "   "
+                content.append(single_str_output)
+            case LsOutputMode.LONG:
+                size_max_wight = max(map(lambda x: len(str(x.stat().st_size)), scan))
+                name_max_wight = max(map(lambda x: len(x.name) * (x.name[0] != "."), scan))
+                for el in scan:
+                    if el.name[0] != ".":
+                        stats = el.stat()
+                        mode = stats.st_mode
+                        single_str_output = stat.filemode(mode) + "   "
+                        single_str_output += str(stats.st_size).rjust(size_max_wight) + "   "
+                        single_str_output += datetime.fromtimestamp(stats.st_mtime).strftime("%b %d %H:%M") + "   "
+                        single_str_output += el.name.rjust(name_max_wight) + "\n"
+                        content.append(single_str_output)
         sys.stdout.writelines(content)
-    except OSError as e:
-        typer.echo(e)
-
-# path = os.getcwd()
-# ls(path=path, arg=["l"])
+    except FileNotFoundError as e:
+        print(f"File '{e}' not found")
+    except NotADirectoryError as e:
+        print(f"'{e}' not a directory")
+    except OSError:
+        print("[Error] OSError")

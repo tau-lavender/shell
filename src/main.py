@@ -2,30 +2,17 @@ import importlib
 import inspect
 from src.configs.plagins_config import PLAGINS_IMPORT_CONFIG
 
+from typer import Typer, Context # type: ignore
+
+from src.log import logger
 
 
-# from src.configs.logger_config import LOGGING_CONFIG
-
-# import logging
-# import sys
-# from pathlib import Path
-
-import typer # type: ignore
-from typer import Typer, Context
-
-
-typer.echo("")
 app = Typer()
 
 
 @app.callback()
 def main(ctx: Context):
     pass
-    # logging.config.dictConfig(LOGGING_CONFIG)
-    # logger = logging.getLogger(__name__)
-
-
-
 
 
 # @app.command()
@@ -63,8 +50,8 @@ if __name__ == "__main__":
         try:
             mod = importlib.import_module(plagin_name)
             functions = inspect.getmembers(mod, inspect.isfunction)
-            print(functions[0][1])
-            app.add_typer(mod.app, name=plagin_name[plagin_name.rfind(".") + 1:])
+            app.command()(functions[0][1])
         except ImportError:
+            logger.error(f"{plagin_name} not imported")
             print(f"{plagin_name} not imported")
     app()

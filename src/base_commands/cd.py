@@ -13,7 +13,7 @@ app = Typer()
 
 
 @app.command()
-def ls(
+def cd(
     ctx: Context,
     path: Path = typer.Argument(
         ..., exists=False, readable=False, help="File to print"
