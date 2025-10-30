@@ -4,17 +4,17 @@ import stat
 from datetime import datetime
 from pathlib import Path
 
-from typer import Argument, Option # type: ignore
+import typer  # type: ignore
 
 from src.log import logger
 from src.enums.ls_output_mode import LsOutputMode
 
 
 def ls(
-    filename: Path = Argument(
+    filename: Path = typer.Argument(
         default=".", exists=False, readable=False, help="Dir to print",
     ),
-    output_mode: bool = Option(False, "-l", help="Add more information"),
+    output_mode: bool = typer.Option(False, "-l", help="Add more information"),
     ) -> None:
 
     """
