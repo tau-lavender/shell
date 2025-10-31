@@ -27,7 +27,12 @@ if __name__ == "__main__":
         try:
             mod = importlib.import_module(plugin_name)
             functions = inspect.getmembers(mod, inspect.isfunction)
-            app.command()(functions[0][1])
+            for foo in functions:
+                if foo[0] == plugin_name[plugin_name.rfind(".") + 1:]:
+                    app.command()(foo[1])
+                    break
+            else:
+                raise ImportError
         except ImportError:
             logger.error(f"{plugin_name} not imported")
             print(f"{plugin_name} not imported")
