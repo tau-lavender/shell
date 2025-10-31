@@ -20,7 +20,8 @@ def ls(
     """
     List all files in a directory.
     :param filename:  path to directory to list
-    :return: content of directory
+    :param output_mode:  optional Long list mode
+    :return:  nothing
     """
     try:
         path = Path(filename)

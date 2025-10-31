@@ -1,38 +1,41 @@
-# import os
-# import stat
-# from datetime import datetime
-
-import sys
+import os
 from pathlib import Path
+from src.constants import PATH_TO_CURRENT_PATH
 
-import typer # type: ignore
-from typer import Typer, Context
+import typer  # type: ignore
+
+from src.log import logger
 
 
-app = Typer()
-
-
-@app.command()
 def cd(
-    ctx: Context,
-    path: Path = typer.Argument(
-        ..., exists=False, readable=False, help="File to print"
+    filename: Path = typer.Argument(
+        default=".", exists=False, readable=False, help="Dir to go",
     ),
     ) -> None:
 
     """
-    List all files in a directory.
-    :param ctx:   typer context object for imitating di container
-    :param path:  path to directory to list
-    :return: content of directory
+    Change working directory.
+    :param filename:  path to directory to go
+    :return:  nothing
     """
     try:
-        # container: Container = get_container(ctx)
-        # content = container.console_service.ls(path)
-        content = "LS used"
-        sys.stdout.writelines(content)
-    except OSError as e:
-        typer.echo(e)
 
-# path = os.getcwd()
-# ls(path=path, arg=["l"])
+        path = Path(filename)
+        if not path.exists():
+            logger.error(f"Folder not found: {path}")
+            raise FileNotFoundError(path)
+        if not path.is_dir():
+            logger.error(f"You entered {path} is not a directory")
+            raise NotADirectoryError(path)
+        logger.info(f"Change directory to {path}")
+        with open(PATH_TO_CURRENT_PATH, "w") as f:
+            current_path = os.getcwd()
+            new_path = str(os.path.abspath(Path(current_path) / path))
+            print(new_path)
+            f.write(new_path)
+    except FileNotFoundError as path:
+        print(f"Folder not found: {path}")
+    except NotADirectoryError as path:
+        print(f"You entered {path} is not a directory")
+    except OSError:
+        print("[Error] OSError")
