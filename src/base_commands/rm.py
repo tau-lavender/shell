@@ -31,7 +31,7 @@ def rm(
                     if path.is_dir():
                         logger.error(f"You entered {filename} is not a file")
                         raise IsADirectoryError(filename)
-                    logger.info(f"Removing {filename}")
+                    logger.info(f"Removing file {filename}")
                     os.remove(path=path)
                 case RemoveMode.DIR:
                     if not path.is_dir():
