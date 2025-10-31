@@ -12,7 +12,7 @@ def cat(
         ..., exists=False, readable=False, help="File to print"
     ),
     raw_mode: bool = typer.Option(False, "--bytes", "-b", help="Read as bytes"),
-):
+    ) -> None:
     """
     Cat a file
     :param ctx: typer context object for imitating di container
