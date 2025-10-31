@@ -7,6 +7,13 @@ from src.log import logger
 from src.enums.rm_mode import RemoveMode
 
 
+class RootRemoveError(Exception):
+    pass
+
+class ParentRemoveError(Exception):
+    pass
+
+
 def rm(
     filename: Path = typer.Argument(
         ..., exists=False, readable=False, help="File to remove"
@@ -21,6 +28,12 @@ def rm(
     """
     try:
         mode = RemoveMode.DIR if raw_mode else RemoveMode.FILE
+        if filename == "..":
+            logger.error("Trying remove parent")
+            raise ParentRemoveError()
+        if str(filename) in "/\\":
+            logger.error("Trying remove root")
+            raise RootRemoveError()
         path = Path(filename)
         if not path.exists():
             logger.error(f"File not found: {filename}")
@@ -43,6 +56,12 @@ def rm(
                         os.rmdir(path=path)
         except OSError as e:
             logger.exception(f"Error reading {filename}: {e}")
+
+    except RootRemoveError:
+        print("Do not try to remove root (pls)")
+    except ParentRemoveError:
+        print("Do not try to remove parent folder (pls)")
+
     except FileNotFoundError as path:
         print(f"File not found: {path}")
     except IsADirectoryError as path:
