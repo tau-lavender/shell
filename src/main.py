@@ -39,4 +39,8 @@ if __name__ == "__main__":
             logger.error(f"{plugin_name} not imported")
 
     # запускает приложение typer
-    app()
+    try:
+        app()
+    except OSError as e:
+        print(f"OSError: {e}")
+        logger.error(f"OSError: {e}")
