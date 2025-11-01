@@ -4,38 +4,37 @@ from src.constants import PATH_TO_CURRENT_PATH
 
 import typer  # type: ignore
 
-from src.log import logger
+from src.log import logger, report_error
 
 
 def cd(
     filename: Path = typer.Argument(
-        default=".", exists=False, readable=False, help="Dir to go",
+        default=".", exists=False, readable=False, help="Путь к директории",
     ),
     ) -> None:
+    """
+    Меняет рабочую директорию
+    :filename: Путь к директории
+    :return: Ничего
+    """
+    path = Path(filename)
 
-    """
-    Change working directory.
-    :param filename:  path to directory to go
-    :return:  nothing
-    """
+    logger.info(f"cd {filename}")
+
     try:
-
-        path = Path(filename)
         if not path.exists():
-            logger.error(f"Folder not found: {path}")
             raise FileNotFoundError(path)
         if not path.is_dir():
-            logger.error(f"You entered {path} is not a directory")
             raise NotADirectoryError(path)
-        logger.info(f"Change directory to {path}")
         with open(PATH_TO_CURRENT_PATH, "w") as f:
             current_path = os.getcwd()
             new_path = str(os.path.abspath(Path(current_path) / path))
-            # print(new_path)
             f.write(new_path)
-    except FileNotFoundError as path:
-        print(f"Folder not found: {path}")
-    except NotADirectoryError as path:
-        print(f"You entered {path} is not a directory")
+        logger.info("Success")
+
+    except FileNotFoundError as e_path:
+        report_error(f"Folder not found: {e_path}")
+    except NotADirectoryError as e_path:
+        report_error(f"{e_path} is not a directory")
     except OSError:
-        print("[Error] OSError")
+        report_error("[Error] OSError")

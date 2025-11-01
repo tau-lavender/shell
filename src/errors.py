@@ -6,3 +6,7 @@ class RootRemoveError(Exception):
 
 class ParentRemoveError(Exception):
     pass
+
+
+class FileWrongTypeError(Exception):
+    pass

@@ -6,36 +6,39 @@ from pathlib import Path
 
 import typer  # type: ignore
 
-from src.log import logger
+from src.log import logger, report_error
 from src.enums.ls_output_mode import LsOutputMode
 
 
 def ls(
     filename: Path = typer.Argument(
-        default=".", exists=False, readable=False, help="Dir to print",
+        default=".", exists=False, readable=False, help="путь к директории",
     ),
-    output_mode: bool = typer.Option(False, "-l", help="Add more information"),
+    raw_mode: bool = typer.Option(False, "-l", help="Режим расширенного вывода"),
     ) -> None:
 
     """
-    List all files in a directory.
-    :param filename:  path to directory to list
-    :param output_mode:  optional Long list mode
-    :return:  nothing
+    Выводит все файлы в директории
+    :filename: путь к директории
+    :output_mode: Режим расширенного вывода
+    :return: Ничего
     """
+
+    path = Path(filename)
+    enum_output_mode = LsOutputMode.LONG if raw_mode else LsOutputMode.NORMAL
+    log_mode_fix = ""
+    if raw_mode:
+        log_mode_fix = " -l"
+    logger.info(f"ls{log_mode_fix} {filename}")
+
     try:
-        path = Path(filename)
         if not path.exists():
-            logger.error(f"Folder not found: {path}")
             raise FileNotFoundError(path)
         if not path.is_dir():
-            logger.error(f"You entered {path} is not a directory")
             raise NotADirectoryError(path)
-        logger.info(f"Listing {path}")
         scan = sorted(list(os.scandir(path)), key=lambda x: x.name.lower())
         content = []
         single_str_output = ""
-        enum_output_mode = LsOutputMode.LONG if output_mode else LsOutputMode.NORMAL
         match enum_output_mode:
             case LsOutputMode.NORMAL:
                 for el in scan:
@@ -54,9 +57,11 @@ def ls(
                         single_str_output += el.name + "\n"
                         content.append(single_str_output)
         sys.stdout.writelines(content)
-    except FileNotFoundError as e:
-        print(f"File '{e}' not found")
-    except NotADirectoryError as e:
-        print(f"'{e}' not a directory")
+        logger.info("Success")
+
+    except FileNotFoundError as e_path:
+        report_error(f"Folder not found: {e_path}")
+    except NotADirectoryError as e_path:
+        report_error(f"'{e_path}' not a directory")
     except OSError:
-        print("[Error] OSError")
+        report_error("[Error] OSError")

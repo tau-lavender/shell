@@ -3,64 +3,60 @@ from pathlib import Path
 
 import typer  # type: ignore
 
-from src.log import logger
+from src.log import logger, report_error
 from src.enums.rm_mode import RemoveMode
 from src.errors import RootRemoveError, ParentRemoveError
 
 
 def rm(
     filename: Path = typer.Argument(
-        ..., exists=False, readable=False, help="File to remove"
+        ..., exists=False, readable=False, help="Что удалять"
     ),
-    raw_mode: bool = typer.Option(False, "-r", help="Remove folder recursive"),
+    raw_mode: bool = typer.Option(False, "-r", help="Удаление папок внутри папок рекурсивно"),
     ) -> None:
+
     """
-    Remove a file
-    :param filename: filename to remove
-    :param raw_mode: Mode to remove dir recursive with all inside
-    :return:
+    Удаляет файл или папку
+    :param filename: Что удалять
+    :param raw_mode: Удаление папок внутри папок рекурсивно
+    :return: Ничего
     """
+
+    mode = RemoveMode.DIR if raw_mode else RemoveMode.FILE
+    path = Path(filename)
+    log_mode_fix = ""
+    if raw_mode:
+        log_mode_fix = " -r"
+    logger.info(f"rm{log_mode_fix} {filename}")
     try:
-        mode = RemoveMode.DIR if raw_mode else RemoveMode.FILE
         if filename == "..":
-            logger.error("Trying remove parent")
             raise ParentRemoveError()
         if str(filename) in "/\\":
-            logger.error("Trying remove root")
             raise RootRemoveError()
-        path = Path(filename)
         if not path.exists():
-            logger.error(f"File not found: {filename}")
             raise FileNotFoundError(filename)
-        try:
-            match mode:
-                case RemoveMode.FILE:
-                    if path.is_dir():
-                        logger.error(f"You entered {filename} is not a file")
-                        raise IsADirectoryError(filename)
-                    logger.info(f"Removing file {filename}")
-                    os.remove(path=path)
-                case RemoveMode.DIR:
-                    if not path.is_dir():
-                        logger.error(f"You entered {filename} is not a dir")
-                        raise NotADirectoryError(filename)
-                    print(f"remove {path} and all files inside y/n: ", end = "")
-                    if input() in ("y", "Y"):
-                        logger.info(f"Removing dir {filename}")
-                        os.rmdir(path=path)
-        except OSError as e:
-            logger.exception(f"Error reading {filename}: {e}")
+        match mode:
+            case RemoveMode.FILE:
+                if path.is_dir():
+                    raise IsADirectoryError(filename)
+                os.remove(path=path)
+            case RemoveMode.DIR:
+                if not path.is_dir():
+                    raise NotADirectoryError(filename)
+                print(f"remove {path} and all files inside y/n: ", end = "")
+                if input() in ("y", "Y"):
+                    os.rmdir(path=path)
+        logger.info("Success")
 
     except RootRemoveError:
-        print("Do not try to remove root (pls)")
+        report_error("Trying to remove root")
     except ParentRemoveError:
-        print("Do not try to remove parent folder (pls)")
-
-    except FileNotFoundError as path:
-        print(f"File not found: {path}")
-    except IsADirectoryError as path:
-        print(f"{path} - is not a file. If you want remove dir use '-r'")
-    except NotADirectoryError as path:
-        print(f"{path} - is not a dir")
+        report_error("Trying to remove parent folder")
+    except FileNotFoundError as e_path:
+        report_error(f"File not found: {e_path}")
+    except IsADirectoryError as e_path:
+        report_error(f"{e_path} - is not a file. If you want remove dir use '-r'")
+    except NotADirectoryError as e_path:
+        report_error(f"{e_path} - is not a dir")
     except OSError as e:
-        typer.echo(e)
+        report_error(f"OSError: {e}")
