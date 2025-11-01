@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 
@@ -5,23 +6,20 @@ import typer  # type: ignore
 
 from src.log import logger
 from src.enums.cp_mode import CopyMode
+from src.errors import PathAlreadyExistsError
 
 
-class PathAlreadyExistsError(Exception):
-    pass
-
-
-def cp(
+def mv(
     filename_from: Path = typer.Argument(
-        ..., exists=False, readable=False, help="What to copy"
+        ..., exists=False, readable=False, help="What to move"
     ),
     filename_were: Path = typer.Argument(
-        ..., exists=False, readable=False, help="Where to copy"
+        ..., exists=False, readable=False, help="Where to move"
     ),
-    raw_mode: bool = typer.Option(False, "-r", help="Remove folder recursive"),
+    raw_mode: bool = typer.Option(False, "-r", help="move folder recursive"),
     ) -> None:
     """
-    Remove a file
+    Move a file
     :param filename: filename to remove
     :param raw_mode: Mode to remove dir recursive with all inside
     :return:
@@ -38,8 +36,9 @@ def cp(
                     raise IsADirectoryError(path_from)
                 if path_where.exists():
                     raise PathAlreadyExistsError(path_where)
-                logger.info(f"Copy {path_from} to {path_where}")
+                logger.info(f"Move {path_from} to {path_where}")
                 shutil.copy(path_from, path_where)
+                os.remove(path=path_from)
             case CopyMode.DIR:
                 if not path_from.is_dir():
                     raise NotADirectoryError(path_from)
@@ -47,8 +46,9 @@ def cp(
                     raise IsADirectoryError(path_where)
                 if path_where.exists():
                     raise PathAlreadyExistsError(path_where)
-                logger.info(f"Copy {path_from} to {path_where}")
+                logger.info(f"Move {path_from} to {path_where}")
                 shutil.copytree(path_from, path_where)
+                os.rmdir(path=path_from)
 
 
     except FileNotFoundError as path:

@@ -1,3 +1,8 @@
+class PathAlreadyExistsError(Exception):
+    pass
 
-class CommandInputException(Exception):
+class RootRemoveError(Exception):
+    pass
+
+class ParentRemoveError(Exception):
     pass

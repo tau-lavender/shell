@@ -5,13 +5,7 @@ import typer  # type: ignore
 
 from src.log import logger
 from src.enums.rm_mode import RemoveMode
-
-
-class RootRemoveError(Exception):
-    pass
-
-class ParentRemoveError(Exception):
-    pass
+from src.errors import RootRemoveError, ParentRemoveError
 
 
 def rm(
